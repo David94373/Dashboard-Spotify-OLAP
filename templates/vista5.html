@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% set pagina = 'v5' %}
+
+{% block contenido %}
+<h1>Vista 5 — Canciones en más Playlists</h1>
+<p class="descripcion">Las 5 canciones que aparecen en más playlists de Spotify y Apple Music.</p>
+<span class="etiqueta-olap">Operación OLAP: Pivot</span>
+
+<div class="caja-grafica">
+  <h2>Gráfica de barras horizontales</h2>
+  <canvas id="miGrafica"></canvas>
+</div>
+
+<div class="caja-grafica">
+  <h2>Tabla de datos</h2>
+  <table>
+    <tr>
+      <th>Canción</th>
+      <th>Artista</th>
+      <th>Playlists Spotify</th>
+      <th>Playlists Apple</th>
+    </tr>
+    <tbody id="miTabla"></tbody>
+  </table>
+</div>
+
+<script>
+fetch('/api/playlists')
+  .then(r => r.json())
+  .then(datos => {
+
+    const ctx = document.getElementById('miGrafica').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: datos.map(d => d.Track),
+        datasets: [
+          {
+            label: 'Spotify Playlists',
+            data: datos.map(d => d.Spotify),
+            backgroundColor: '#1DB954'
+          },
+          {
+            label: 'Apple Music Playlists',
+            data: datos.map(d => d.Apple),
+            backgroundColor: '#fc3c44'
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y',   // barras horizontales
+        responsive: true,
+        scales: {
+          x: { ticks: { callback: v => v.toLocaleString() } }
+        }
+      }
+    });
+
+    // Tabla
+    const tabla = document.getElementById('miTabla');
+    datos.forEach(d => {
+      tabla.innerHTML += `
+        <tr>
+          <td>${d.Track}</td>
+          <td>${d.Artist}</td>
+          <td>${Number(d.Spotify).toLocaleString()}</td>
+          <td>${Number(d.Apple).toLocaleString()}</td>
+        </tr>`;
+    });
+
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% set pagina = 'v2' %}
+
+{% block contenido %}
+<h1>Vista 2 — Comparativa de Plataformas</h1>
+<p class="descripcion">¿Dónde se escucha más cada canción: Spotify, YouTube o TikTok?</p>
+<span class="etiqueta-olap">Operación OLAP: Dice</span>
+
+<div class="caja-grafica">
+  <h2>Gráfica de barras agrupadas</h2>
+  <canvas id="miGrafica"></canvas>
+</div>
+
+<div class="caja-grafica">
+  <h2>Tabla de datos</h2>
+  <table>
+    <tr>
+      <th>Canción</th>
+      <th>Artista</th>
+      <th style="color:#1DB954">Spotify</th>
+      <th style="color:#FF0000">YouTube</th>
+      <th style="color:#000">TikTok</th>
+    </tr>
+    <tbody id="miTabla"></tbody>
+  </table>
+</div>
+
+<script>
+fetch('/api/plataformas')
+  .then(r => r.json())
+  .then(datos => {
+
+    const abreviar = v => {
+      if (v >= 1e9) return (v/1e9).toFixed(1)+'B';
+      if (v >= 1e6) return (v/1e6).toFixed(0)+'M';
+      return v;
+    };
+
+    const ctx = document.getElementById('miGrafica').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: datos.map(d => d.Track.slice(0, 14)),
+        datasets: [
+          {
+            label: 'Spotify',
+            data: datos.map(d => d['Spotify Streams']),
+            backgroundColor: '#1DB954'
+          },
+          {
+            label: 'YouTube',
+            data: datos.map(d => d['YouTube Views']),
+            backgroundColor: '#FF0000'
+          },
+          {
+            label: 'TikTok',
+            data: datos.map(d => d['TikTok Views']),
+            backgroundColor: '#333'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { ticks: { callback: abreviar } },
+          x: { ticks: { maxRotation: 40 } }
+        }
+      }
+    });
+
+    // Tabla
+    const tabla = document.getElementById('miTabla');
+    datos.forEach(d => {
+      tabla.innerHTML += `
+        <tr>
+          <td>${d.Track}</td>
+          <td>${d.Artist}</td>
+          <td>${Number(d['Spotify Streams']).toLocaleString()}</td>
+          <td>${Number(d['YouTube Views']).toLocaleString()}</td>
+          <td>${Number(d['TikTok Views']).toLocaleString()}</td>
+        </tr>`;
+    });
+
+  });
+</script>
+{% endblock %}

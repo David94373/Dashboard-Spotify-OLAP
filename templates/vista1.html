@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% set pagina = 'v1' %}
+
+{% block contenido %}
+<h1>Vista 1 — Top 10 Canciones</h1>
+<p class="descripcion">Las 10 canciones con más streams en Spotify durante 2024.</p>
+<span class="etiqueta-olap">Operación OLAP: Slice</span>
+
+<div class="caja-grafica">
+  <h2>Gráfica de barras</h2>
+  <canvas id="miGrafica"></canvas>
+</div>
+
+<div class="caja-grafica">
+  <h2>Tabla de datos</h2>
+  <table>
+    <tr>
+      <th>#</th>
+      <th>Canción</th>
+      <th>Artista</th>
+      <th>Streams</th>
+    </tr>
+    <tbody id="miTabla"></tbody>
+  </table>
+</div>
+
+<script>
+// Pedir datos al servidor
+fetch('/api/top10')
+  .then(respuesta => respuesta.json())
+  .then(datos => {
+
+    // Crear la gráfica
+    const ctx = document.getElementById('miGrafica').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: datos.map(d => d.Track),
+        datasets: [{
+          label: 'Spotify Streams',
+          data: datos.map(d => d['Spotify Streams']),
+          backgroundColor: '#1DB954'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            ticks: {
+              // Mostrar números abreviados (ej: 1.2B)
+              callback: function(valor) {
+                if (valor >= 1000000000) return (valor / 1000000000).toFixed(1) + 'B';
+                if (valor >= 1000000) return (valor / 1000000).toFixed(0) + 'M';
+                return valor;
+              }
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45,
+              callback: function(val, index) {
+                // Cortar nombres largos
+                const nombre = datos[index].Track;
+                return nombre.length > 15 ? nombre.slice(0, 15) + '…' : nombre;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Llenar la tabla
+    const tabla = document.getElementById('miTabla');
+    datos.forEach((d, i) => {
+      const streams = Number(d['Spotify Streams']).toLocaleString();
+      tabla.innerHTML += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${d.Track}</td>
+          <td>${d.Artist}</td>
+          <td>${streams}</td>
+        </tr>`;
+    });
+
+  });
+</script>
+{% endblock %}

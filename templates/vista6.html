@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% set pagina = 'v6' %}
+
+{% block contenido %}
+<h1>Vista 6 — Consulta Personalizable</h1>
+<p class="descripcion">Arma tu propia consulta. Selecciona cómo quieres agrupar los datos, qué métrica deseas visualizar y aplica filtros de tiempo.</p>
+<span class="etiqueta-olap">Operación OLAP: Slice, Dice & Roll-Up dinámico</span>
+
+<div class="caja-grafica" style="background-color: #e8f5e9; border: 1px solid #c8e6c9;">
+  <h2>Filtros de la Consulta</h2>
+  <form id="formConsulta" style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;">
+    
+    <div>
+      <label for="agrupar_por" style="font-weight: bold; font-size: 14px;">Agrupar por (Dimensión):</label><br>
+      <select id="agrupar_por" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-top: 5px;">
+        <option value="Artist">Artista</option>
+        <option value="Track">Canción</option>
+        <option value="Album Name">Álbum</option>
+        <option value="Año de Lanzamiento">Año de Lanzamiento</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="metrica" style="font-weight: bold; font-size: 14px;">Métrica a sumar:</label><br>
+      <select id="metrica" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-top: 5px;">
+        <optgroup label="Reproducciones">
+          <option value="Spotify Streams">Spotify Streams</option>
+          <option value="YouTube Views">YouTube Views</option>
+          <option value="TikTok Views">TikTok Views</option>
+        </optgroup>
+        <optgroup label="Playlists y Otros">
+          <option value="Spotify Playlist Count">Playlists de Spotify</option>
+          <option value="Apple Music Playlist Count">Playlists de Apple Music</option>
+          <option value="Shazam Counts">Búsquedas en Shazam</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div>
+      <label for="filtro_tiempo" style="font-weight: bold; font-size: 14px;">Filtrar por tiempo (Mes):</label><br>
+      <select id="filtro_tiempo" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-top: 5px;">
+        <option value="todos" selected>Todo el año (Sin filtro)</option>
+        <option value="Enero">Enero</option>
+        <option value="Febrero">Febrero</option>
+        <option value="Marzo">Marzo</option>
+        <option value="Abril">Abril</option>
+        <option value="Mayo">Mayo</option>
+        <option value="Junio">Junio</option>
+        <option value="Julio">Julio</option>
+        <option value="Agosto">Agosto</option>
+        <option value="Septiembre">Septiembre</option>
+        <option value="Octubre">Octubre</option>
+        <option value="Noviembre">Noviembre</option>
+        <option value="Diciembre">Diciembre</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="limite" style="font-weight: bold; font-size: 14px;">Mostrar Top:</label><br>
+      <select id="limite" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-top: 5px;">
+        <option value="5">Top 5</option>
+        <option value="10">Top 10</option>
+        <option value="20" selected>Top 20</option>
+        <option value="50">Top 50</option>
+      </select>
+    </div>
+
+    <div>
+      <button type="submit" style="background-color: #1DB954; color: white; padding: 10px 20px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer;">
+        Ejecutar Consulta
+      </button>
+    </div>
+  </form>
+</div>
+
+<div class="caja-grafica">
+  <h2 id="tituloGrafica">Resultados de la consulta</h2>
+  <canvas id="miGrafica"></canvas>
+</div>
+
+<div class="caja-grafica">
+  <h2>Tabla de datos</h2>
+  <table>
+    <thead>
+      <tr>
+        <th id="columnaDimension">Dimensión</th>
+        <th id="columnaMetrica">Métrica</th>
+      </tr>
+    </thead>
+    <tbody id="miTabla"></tbody>
+  </table>
+</div>
+
+<script>
+  let chartInstancia = null;
+
+  document.getElementById('formConsulta').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Leer valores de los 4 comboboxes
+    const agrupar_por = document.getElementById('agrupar_por').value;
+    const metrica = document.getElementById('metrica').value;
+    const filtro_tiempo = document.getElementById('filtro_tiempo').value;
+    const limite = document.getElementById('limite').value;
+
+    // Ajustar el título dinámicamente según el mes seleccionado
+    const textoMes = filtro_tiempo === 'todos' ? 'en todo el año' : `en el mes de ${filtro_tiempo}`;
+    document.getElementById('columnaDimension').innerText = agrupar_por;
+    document.getElementById('columnaMetrica').innerText = metrica;
+    document.getElementById('tituloGrafica').innerText = `Top ${limite} de ${agrupar_por} basado en ${metrica} (${textoMes})`;
+
+    // Hacer petición enviando las 4 variables
+    fetch('/api/consulta_dinamica', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agrupar_por, metrica, filtro_tiempo, limite })
+    })
+    .then(r => r.json())
+    .then(datos => {
+      
+      // Manejar caso de que no haya datos para ese mes en particular
+      if(datos.length === 0) {
+         alert("No se encontraron lanzamientos para los filtros seleccionados en ese mes.");
+      }
+
+      // Dibujar Gráfica
+      const ctx = document.getElementById('miGrafica').getContext('2d');
+      if (chartInstancia) chartInstancia.destroy();
+
+      chartInstancia = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: datos.map(d => d[agrupar_por] ? d[agrupar_por].toString().slice(0, 20) : "Desconocido"),
+          datasets: [{
+            label: metrica,
+            data: datos.map(d => d[metrica]),
+            backgroundColor: '#1DB954'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              ticks: {
+                callback: function(v) {
+                  if (v >= 1e9) return (v/1e9).toFixed(1)+'B';
+                  if (v >= 1e6) return (v/1e6).toFixed(0)+'M';
+                  return v.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Llenar Tabla
+      const tabla = document.getElementById('miTabla');
+      tabla.innerHTML = '';
+      datos.forEach(d => {
+        const valorFormateado = Number(d[metrica]).toLocaleString();
+        tabla.innerHTML += `
+          <tr>
+            <td>${d[agrupar_por]}</td>
+            <td>${valorFormateado}</td>
+          </tr>
+        `;
+      });
+    });
+  });
+
+  // Cargar consulta inicial
+  document.getElementById('formConsulta').dispatchEvent(new Event('submit'));
+</script>
+{% endblock %}

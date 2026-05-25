@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% set pagina = 'inicio' %}
+
+{% block contenido %}
+<h1>Dashboard OLAP — Spotify 2024</h1>
+<p class="descripcion">Análisis de las canciones más escuchadas en Spotify durante 2024.</p>
+
+<div class="caja-grafica">
+  <h2>¿Qué es OLAP?</h2>
+  <p style="color:#555; font-size:14px; line-height:1.7">
+    OLAP significa <strong>Procesamiento Analítico en Línea</strong>. Permite ver los datos
+    desde diferentes ángulos: por artista, por mes, por plataforma, etc.
+    Este proyecto tiene 5 vistas distintas del un dataset de Spotify.
+  </p>
+</div>
+
+<div class="caja-grafica">
+  <h2>Vistas disponibles</h2>
+  <table>
+    <tr>
+      <th>Vista</th>
+      <th>¿Qué muestra?</th>
+      <th>Operación OLAP</th>
+    </tr>
+    <tr>
+      <td><a href="/vista1" style="color:#1DB954">Vista 1 — Top 10</a></td>
+      <td>Las 10 canciones con más streams</td>
+      <td>Slice</td>
+    </tr>
+    <tr>
+      <td><a href="/vista2" style="color:#1DB954">Vista 2 — Plataformas</a></td>
+      <td>Spotify vs YouTube vs TikTok</td>
+      <td>Dice</td>
+    </tr>
+    <tr>
+      <td><a href="/vista3" style="color:#1DB954">Vista 3 — Artistas</a></td>
+      <td>Streams totales por artista</td>
+      <td>Roll-Up</td>
+    </tr>
+    <tr>
+      <td><a href="/vista4" style="color:#1DB954">Vista 4 — Por Mes</a></td>
+      <td>Streams acumulados por mes de lanzamiento</td>
+      <td>Drill-Down</td>
+    </tr>
+    <tr>
+      <td><a href="/vista5" style="color:#1DB954">Vista 5 — Playlists</a></td>
+      <td>Canciones que aparecen en más playlists de Spotify y Apple</td>
+      <td>Pivot</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;"><a href="/vista6" style="color:#1DB954;">Vista 6 — Personalizable</a></td>
+      <td>Consulta multi-variable mediante filtros y dimensiones en tiempo real</td>
+      <td>Slice, Dice & Roll-Up dinámico</td>
+    </tr>
+  </table>
+</div>
+{% endblock %}

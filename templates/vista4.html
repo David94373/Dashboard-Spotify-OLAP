@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% set pagina = 'v4' %}
+
+{% block contenido %}
+<h1>Vista 4 — Streams por Mes de Lanzamiento</h1>
+<p class="descripcion">¿En qué mes se lanzan las canciones que acumulan más streams?</p>
+<span class="etiqueta-olap">Operación OLAP: Drill-Down</span>
+
+<div class="caja-grafica">
+  <h2>Gráfica de línea</h2>
+  <canvas id="miGrafica"></canvas>
+</div>
+
+<div class="caja-grafica">
+  <h2>Tabla de datos</h2>
+  <table>
+    <tr>
+      <th>Mes</th>
+      <th>Total Streams</th>
+    </tr>
+    <tbody id="miTabla"></tbody>
+  </table>
+</div>
+
+<script>
+fetch('/api/meses')
+  .then(r => r.json())
+  .then(datos => {
+
+    const ctx = document.getElementById('miGrafica').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: datos.map(d => d.Mes),
+        datasets: [{
+          label: 'Streams acumulados',
+          data: datos.map(d => d['Spotify Streams']),
+          borderColor: '#1DB954',
+          backgroundColor: 'rgba(29,185,84,0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            ticks: {
+              callback: v => {
+                if (v >= 1e9) return (v/1e9).toFixed(1)+'B';
+                if (v >= 1e6) return (v/1e6).toFixed(0)+'M';
+                return v;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Tabla
+    const tabla = document.getElementById('miTabla');
+    datos.forEach(d => {
+      tabla.innerHTML += `
+        <tr>
+          <td>${d.Mes}</td>
+          <td>${Number(d['Spotify Streams']).toLocaleString()}</td>
+        </tr>`;
+    });
+
+  });
+</script>
+{% endblock %}
