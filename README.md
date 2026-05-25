@@ -18,13 +18,13 @@ Además, el proyecto utiliza dos librerías externas de Python que deben ser ins
 
 Sigue estos pasos para arrancar el servidor local y visualizar el dashboard:
 
-**1. Descargar el proyecto**
+**1. Descargar el proyecto:**
 Clona este repositorio o descarga el archivo `.zip` y extráelo en una carpeta de tu computadora.
 
-**2. Abrir la terminal**
+**2. Abrir la terminal:**
 Abre una terminal (Símbolo del sistema, PowerShell o la terminal de tu editor de código) y navega hasta la carpeta raíz del proyecto (donde se encuentra el archivo `app.py`).
 
-**3. Instalar las dependencias**
+**3. Instalar las dependencias:**
 Ejecuta el siguiente comando en la terminal para instalar Flask y Pandas:
 ```bash
 pip install flask pandas
